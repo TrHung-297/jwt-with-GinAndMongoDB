@@ -75,12 +75,12 @@ func Login(c *gin.Context) {
 
 	// Get the JSON body and decode into credentials
 	if err := c.BindJSON(&creds); err != nil {
-		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: err.Error()})
 		return
 	}
 
 	if validationErr := validate.Struct(&creds); validationErr != nil {
-		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}})
+		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: validationErr.Error()})
 		return
 	}
 
@@ -100,7 +100,7 @@ func Login(c *gin.Context) {
 	cursor, error_find := controllers.UserCollection.Find(context.TODO(), filter)
 	// check for errors in the finding
 	if error_find != nil {
-		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": error_find.Error()}})
+		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: error_find.Error()})
 		return
 	}
 
@@ -108,7 +108,7 @@ func Login(c *gin.Context) {
 	var results []bson.M
 	// check for errors in the conversion
 	if error_find = cursor.All(context.TODO(), &results); error_find != nil {
-		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": error_find.Error()}})
+		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: error_find.Error()})
 		return
 	}
 
@@ -119,18 +119,18 @@ func Login(c *gin.Context) {
 		for _, result := range results {
 			fmt.Println(result)
 		}
-		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: map[string]interface{}{"data": "Login failed. Email or password wrong"}})
+		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "Login failed. Email or password wrong"})
 		return
 	} else {
 		j, err := json.Marshal(results)
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: err.Error()})
 			return
 		}
 		err1 := json.Unmarshal(j, &modell)
 		if err1 != nil {
-			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err1.Error()}})
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: err1.Error()})
 			return
 		}
 		for i := range modell {
@@ -140,17 +140,17 @@ func Login(c *gin.Context) {
 		if password_inDB == creds.Password {
 			token, err := CreateToken(creds.Email)
 			if err != nil {
-				c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+				c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: err.Error()})
 				return
 			}
 			data := &JWT{
 				Access_token:  token.AccessToken,
 				Refresh_token: token.RefreshToken,
 			}
-			c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": data}})
+			c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: data})
 			return
 		} else {
-			c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: map[string]interface{}{"data": "Login failed. Email or password wrong"}})
+			c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "Login failed. Email or password wrong"})
 			return
 		}
 	}
@@ -213,7 +213,7 @@ func CreateToken(email string) (*TokenDetails, error) {
 		tokenString, err := token_.SignedString(jwtKey)
 		if err != nil {
 			// If there is an error in creating the JWT return an internal server error
-			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: {"data": err.Error()}})
 		}
 	*/
 }

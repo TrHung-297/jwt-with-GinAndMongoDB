@@ -95,29 +95,29 @@ func CreateTodo(c *gin.Context) {
 	var td *Todo
 	// var validate = validator.New()
 	if err := c.ShouldBindJSON(&td); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: map[string]interface{}{"data": "invalid json"}})
+		c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: "invalid json"})
 		return
 	}
 	// if validationErr := validate.Struct(&td); validationErr != nil {
-	// 	c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}})
+	// 	c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: {"data": validationErr.Error()}})
 	// 	return
 	// }
 	tokenAuth, err := ExtractTokenMetadata(c.Request)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: map[string]interface{}{"data": "unauthorized"}})
+		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "unauthorized"})
 		return
 	}
-	c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": tokenAuth}})
+	c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: tokenAuth})
 	return
 	// userId, err := FetchAuth(tokenAuth)
 	// if err != nil {
-	// 	c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: map[string]interface{}{"data": "unauthorized"}})
+	// 	c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: {"data": "unauthorized"}})
 	// 	return
 	// }
 	// td.Email = userId
 
 	// //you can proceed to save the Todo to a database
 	// //but we will just return it to the caller here:
-	// c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": td}})
+	// c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: {"data": td}})
 	// return
 }
