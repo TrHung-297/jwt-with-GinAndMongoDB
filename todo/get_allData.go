@@ -84,6 +84,7 @@ func ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 }
 
 func FetchAuth(authD *AccessDetails) (string, error) {
+	fmt.Printf("check uuid: %v\n",authD.AccessUuid)
 	userid, err := client.Get(authD.AccessUuid).Result()
 	if err != nil {
 		return "", err
@@ -107,17 +108,17 @@ func CreateTodo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "unauthorized"})
 		return
 	}
-	c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: tokenAuth})
-	return
-	// userId, err := FetchAuth(tokenAuth)
-	// if err != nil {
-	// 	c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: {"data": "unauthorized"}})
-	// 	return
-	// }
-	// td.Email = userId
-
-	// //you can proceed to save the Todo to a database
-	// //but we will just return it to the caller here:
-	// c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: {"data": td}})
+	// c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: tokenAuth})
 	// return
+	userId, err := FetchAuth(tokenAuth)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "unauthorized"})
+		return
+	}
+	td.Email = userId
+
+	//you can proceed to save the Todo to a database
+	//but we will just return it to the caller here:
+	c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: td})
+	return
 }

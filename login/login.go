@@ -138,14 +138,19 @@ func Login(c *gin.Context) {
 			password_inDB = modell[i].Password
 		}
 		if password_inDB == creds.Password {
-			token, err := CreateToken(creds.Email)
+			token_data, err := CreateToken(creds.Email)
 			if err != nil {
 				c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: err.Error()})
 				return
 			}
+			saveErr := CreateAuth(creds.Email, token_data)
+			if saveErr != nil {
+				c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+			}
+			fmt.Printf("check access uuid:%v\n", token_data.AccessUuid)
 			data := &JWT{
-				Access_token:  token.AccessToken,
-				Refresh_token: token.RefreshToken,
+				Access_token:  token_data.AccessToken,
+				Refresh_token: token_data.RefreshToken,
 			}
 			c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: data})
 			return
@@ -216,4 +221,20 @@ func CreateToken(email string) (*TokenDetails, error) {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: {"data": err.Error()}})
 		}
 	*/
+}
+
+func CreateAuth(userid string, td *TokenDetails) error {
+	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
+	rt := time.Unix(td.RtExpires, 0)
+	now := time.Now()
+
+	errAccess := client.Set(td.AccessUuid, userid, at.Sub(now)).Err()
+	if errAccess != nil {
+		return errAccess
+	}
+	errRefresh := client.Set(td.RefreshUuid, userid, rt.Sub(now)).Err()
+	if errRefresh != nil {
+		return errRefresh
+	}
+	return nil
 }
