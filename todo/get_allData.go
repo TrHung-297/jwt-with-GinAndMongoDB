@@ -60,6 +60,18 @@ func TokenValid(r *http.Request) error {
 	return nil
 }
 
+func TokenAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := TokenValid(c.Request)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, err.Error())
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 func ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 	token, err := VerifyToken(r)
 	if err != nil {
@@ -84,7 +96,7 @@ func ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 }
 
 func FetchAuth(authD *AccessDetails) (string, error) {
-	fmt.Printf("check uuid: %v\n",authD.AccessUuid)
+	fmt.Printf("check uuid: %v\n", authD.AccessUuid)
 	userid, err := client.Get(authD.AccessUuid).Result()
 	if err != nil {
 		return "", err

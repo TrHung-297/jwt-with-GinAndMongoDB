@@ -238,3 +238,72 @@ func CreateAuth(userid string, td *TokenDetails) error {
 	}
 	return nil
 }
+
+func Refresh(c *gin.Context) {
+	mapToken := map[string]string{}
+	if err := c.ShouldBindJSON(&mapToken); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: err.Error()})
+		return
+	}
+	refreshToken := mapToken["refresh_token"]
+
+	//verify the token
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
+		//Make sure that the token method conform to "SigningMethodHMAC"
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("REFRESH_SECRET")), nil
+	})
+	//if there is an error, the token must have expired
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "Refresh token expired"})
+		return
+	}
+	//is token valid?
+	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
+		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: err.Error()})
+		return
+	}
+	//Since token is valid, get the uuid:
+	claims, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
+	if ok && token.Valid {
+		refreshUuid, ok1 := claims["refresh_uuid"].(string) //convert the interface to string
+		if !ok1 {
+			c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: err.Error()})
+			return
+		}
+		_email, ok2 := claims["user_id"].(string) //convert the interface to string
+		if !ok2 {
+			c.JSON(http.StatusUnprocessableEntity, responses.UserResponse{Status: http.StatusUnprocessableEntity, Message: "error", Data: "Error occurred"})
+			return
+		}
+		//Delete the previous Refresh Token
+		deleted, delErr := DeleteAuth(refreshUuid)
+		if delErr != nil || deleted == 0 { //if any goes wrong
+			c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "error", Data: "unauthorized"})
+			return
+		}
+		//Create new pairs of refresh and access tokens
+		ts, createErr := CreateToken(_email)
+		if createErr != nil {
+			c.JSON(http.StatusForbidden, responses.UserResponse{Status: http.StatusForbidden, Message: "error", Data: createErr.Error()})
+			return
+		}
+		//save the tokens metadata to redis
+		saveErr := CreateAuth(_email, ts)
+		if saveErr != nil {
+			c.JSON(http.StatusForbidden, responses.UserResponse{Status: http.StatusForbidden, Message: "error", Data: saveErr.Error()})
+			return
+		}
+		data := &JWT{
+			Access_token:  ts.AccessToken,
+			Refresh_token: ts.RefreshToken,
+		}
+		c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: data})
+		return
+	} else {
+		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "success", Data: "refresh expired"})
+		return
+	}
+}
