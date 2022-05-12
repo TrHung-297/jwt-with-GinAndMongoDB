@@ -29,6 +29,6 @@ func Logout(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: "unauthorized 2"})
 		return
 	}
-	c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "error", Data: "Successfully logged out"})
+	c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: "Successfully logged out"})
 	return
 }
